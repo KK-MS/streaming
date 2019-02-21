@@ -1,0 +1,15 @@
+﻿C:\sw\MicrosoftVisualStudio\2017\Community\Common7\IDE\VC\VCTargets\Microsoft.CppBuild.targets(387,5): warning MSB8028: The intermediate directory (x64\Release\) contains files shared from another project (steaming.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+  StereoExecute.cpp
+  StereoInput.cpp
+StereoInput.cpp(34): warning C4477: 'printf' : format string '%d' requires an argument of type 'int', but variadic argument 2 has type 'cv::MatStep'
+StereoInput.cpp(65): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+  StereoOutput.cpp
+StereoOutput.cpp(213): warning C4477: 'printf' : format string '%d' requires an argument of type 'int', but variadic argument 2 has type '::size_t'
+  StereoOutput.cpp(213): note: consider using '%zd' in the format string
+  StereoProcess.cpp
+  Generating code
+  0 of 256 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    0 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  steaming.vcxproj -> C:\prj\02-ZIM\repo\steaming\x64\Release\streaming.exe
