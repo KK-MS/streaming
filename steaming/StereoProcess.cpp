@@ -32,7 +32,7 @@ int StereoProcess_ToJpeg(StereoObject *pStereoObject)
 	// Get the required data locally
 	pPkt = pStereoObject->stStereoPacket;
 	pMeta = &(pPkt->stMetadata.stStereoMetadata);
-	pJpegWrite = pPkt->ucJpepFrames;
+	pJpegWrite = pPkt->ucJpegFrames;
 
 	pFrameL = pStereoObject->pFrameLeft;
 	pFrameR = pStereoObject->pFrameRight;
@@ -86,7 +86,7 @@ int StereoProcess_ToJpeg(StereoObject *pStereoObject)
 	unsigned long iJpeg_size;
 
 	// Get the JPEG base address to read
-	pJpegRead = pPkt->ucJpepFrames;
+	pJpegRead = pPkt->ucJpegFrames;
 
 	//////////// RIGHT ////////////////////////
 	iJpeg_size = static_cast<unsigned int> (pMeta->uiRightJpegSize);
@@ -114,6 +114,11 @@ int StereoProcess_ToJpeg(StereoObject *pStereoObject)
 		}
 		
 	}
+
+	printf("StereProcess: R Size:%d, Data: %x, %x, %x, %x, End: %x, %x, %x, %x\n",
+		iJpeg_size,
+		pJpegRead[0], pJpegRead[1], pJpegRead[2], pJpegRead[3],
+		pJpegRead[iJpeg_size - 4], pJpegRead[iJpeg_size - 3], pJpegRead[iJpeg_size - 2], pJpegRead[iJpeg_size - 1]);
 
 	//////////// LEFT ////////////////////////
 
@@ -145,6 +150,10 @@ int StereoProcess_ToJpeg(StereoObject *pStereoObject)
 		}
 
 	}
+	printf("StereProcess: L Size:%d, Data: %x, %x, %x, %x, End: %x, %x, %x, %x\n",
+		iJpeg_size,
+		pJpegRead[0], pJpegRead[1], pJpegRead[2], pJpegRead[3],
+		pJpegRead[iJpeg_size - 4], pJpegRead[iJpeg_size - 3], pJpegRead[iJpeg_size - 2], pJpegRead[iJpeg_size - 1]);
 
 	// https://stackoverflow.com/questions/14727267/opencv-read-jpeg-image-from-buffer
 #endif //DEBUG_STEREO_JPEG	

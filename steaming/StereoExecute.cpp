@@ -22,7 +22,7 @@
 #define DEBUG_STEREO_INPUT  (1u)
 #define DEBUG_STEREO_OUTPUT (0u)
 #define DEBUG_STEREO_DEBUG  (0u)
-#define DEBUG_STEREO_JPEG   (0u)
+#define DEBUG_STEREO_JPEG   (1u)
 
 #define TAG_LOC "STE: "
 
@@ -105,7 +105,7 @@ void StereoExecute_Scheduler(void *param)
 	StereoObject *pStereoObject = (StereoObject *)param;
 
 	// for debug: open the required windows
-	OpenDisplayWindows();
+	//OpenDisplayWindows();
 
 	// enter into scheduling
 	while (1) {
@@ -133,12 +133,12 @@ void StereoExecute_Scheduler(void *param)
 		// OUTPUT:e.g. IMAGES
 		ret_val = StereoOutput_Packet(pStereoObject);
 		//ret_val = stereo_output_request(ptr_stereo_object);
-		if (ret_val) { goto err_ret; }
+		//if (ret_val) { goto err_ret; }
 
-		ImageShowDebug(pStereoObject);
+		//ImageShowDebug(pStereoObject);
 
 		//  wait until ESC key
-		if (cv::waitKey(10) == 27) { // delay: Tune it.
+		if (cv::waitKey(50) == 27) { // delay: Tune it.
 			break;
 		}
 		

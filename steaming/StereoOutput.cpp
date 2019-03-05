@@ -181,7 +181,6 @@ int StereoOutput_Packet(StereoObject *pStereoObject)
   int iSendLen;
   int iRemainLen;
 
-
   // initialize local variables
   pPkt        = pStereoObject->stStereoPacket;
   pPktBuf = (const char *)pPkt;
@@ -277,7 +276,7 @@ int NetworkServerInit()
   servaddr.sin_family = AF_INET;
   servaddr.sin_port = htons(INPUT_SERVER_PORT); //Port to connect on
   servaddr.sin_addr.s_addr = inet_addr(INPUT_SERVER_IP);
-  servaddr.sin_port = IPPROTO_UDP;
+  //servaddr.sin_port = IPPROTO_UDP;
 
   // Setup the UDP listening socket
   iResult = bind(s, (struct sockaddr*) &servaddr, (int)sizeof(servaddr));
