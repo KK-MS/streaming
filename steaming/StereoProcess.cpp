@@ -30,7 +30,7 @@ int StereoProcess_ToJpeg(StereoObject *pStereoObject)
 	static std::vector<int> params = { cv::IMWRITE_JPEG_QUALITY, STEREO_QUALITY_VALUE };
 
 	// Get the required data locally
-	pPkt = pStereoObject->stStereoPacket;
+	pPkt = pStereoObject->pStereoPacket;
 	pMeta = &(pPkt->stMetadata.stStereoMetadata);
 	pJpegWrite = pPkt->ucJpegFrames;
 

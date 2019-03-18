@@ -102,7 +102,7 @@ int stereo_output_camera(unsigned char *frame_buffer)
 
 
 
-int StereoOutput_Packet1(StereoObject *pStereoObject)
+int StereoOutput_Packet1(StereoObject *pStereoObj)
 {
   int ret_val;
 
@@ -111,25 +111,25 @@ int StereoOutput_Packet1(StereoObject *pStereoObject)
   int len = sizeof(sockaddr_in);
 
   // Metadata variables
-  char req_msg[MAX_REQ_SIZE + 1]; // +1 to add null at last
-  const char *res_meta = (const char *)& (pStereoObject->meta_pkt);
-  int len_meta = sizeof(pStereoObject->meta_pkt);
+  char cReqBuf[MAX_REQ_SIZE + 1]; // +1 to add null at last
+  const char *res_meta = (const char *)& (pStereoObj->meta_pkt);
+  int len_meta = sizeof(pStereoObj->meta_pkt);
 
   // stereo data variables
   char req_imgs[] = REQ_IMAGES;
-  char *res_imgs = (char *)pStereoObject->ptr_jpeg_stream;
+  char *res_imgs = (char *)pStereoObj->ptr_jpeg_stream;
 
-  int len_imgs = pStereoObject->meta_pkt.jpeg_left_size
-    + pStereoObject->meta_pkt.jpeg_right_size;
+  int len_imgs = pStereoObj->meta_pkt.jpeg_left_size
+    + pStereoObj->meta_pkt.jpeg_right_size;
 
   // Process command metadata
   cout << TAG_SOUT "recvfrom for REQ_METDATA" << endl;
-  if ((ret_val = recvfrom(s, req_msg, MAX_REQ_SIZE, 0, &cliaddr, &len)) < 0) { goto ret_err; }
-  req_msg[ret_val] = '\0';
+  if ((ret_val = recvfrom(s, cReqBuf, MAX_REQ_SIZE, 0, &cliaddr, &len)) < 0) { goto ret_err; }
+  cReqBuf[ret_val] = '\0';
 
 
-  if (strcmp(req_msg, REQ_METADATA) != 0) {
-    cout << TAG_SOUT "Error: expected REQ_METDATA, received:" << req_msg << endl;
+  if (strcmp(cReqBuf, REQ_METADATA) != 0) {
+    cout << TAG_SOUT "Error: expected REQ_METDATA, received:" << cReqBuf << endl;
     goto ret_err;
   }
 
@@ -138,11 +138,11 @@ int StereoOutput_Packet1(StereoObject *pStereoObject)
 
   // Process command to send stereo images
   cout << TAG_SOUT "recvfrom for REQ_IMAGES" << endl;
-  if ((ret_val = recvfrom(s, req_msg, MAX_REQ_SIZE, 0, &cliaddr, &len)) < 0) { goto ret_err; }
+  if ((ret_val = recvfrom(s, cReqBuf, MAX_REQ_SIZE, 0, &cliaddr, &len)) < 0) { goto ret_err; }
 
   cout << TAG_SOUT "sendto for REQ_IMAGES" << endl;
-  if (strcmp(req_msg, REQ_IMAGES) != 0) {
-    cout << TAG_SOUT "Error: expected REQ_IMAGES, received:" << req_msg << endl;
+  if (strcmp(cReqBuf, REQ_IMAGES) != 0) {
+    cout << TAG_SOUT "Error: expected REQ_IMAGES, received:" << cReqBuf << endl;
   }
   cout << TAG_SOUT "REQ_IMAGES, size:" << len_imgs << endl;
 
@@ -153,18 +153,95 @@ int StereoOutput_Packet1(StereoObject *pStereoObject)
   return 0;
 
 ret_err:
-  printf(TAG_SOUT "Error: sending %s, ret:%d, NetErr:%d\n", req_msg, ret_val, WSAGetLastError());
+  printf(TAG_SOUT "Error: sending %s, ret:%d, NetErr:%d\n", cReqBuf, ret_val, WSAGetLastError());
   return -1;
 
 }
 #endif
 
-int StereoOutput_Packet(StereoObject *pStereoObject)
+int StereoOutput_Packet(StereoObject *pStereoObj)
+{
+  int iRetVal;
+
+  SOCKET *phSock;
+  sockaddr *phCliAddr;
+
+  // REQUEST holder
+  char cReqBuf[MAX_REQ_SIZE + 1]; // +1 to add null at last
+
+  int *piLenAddr;
+  int iPktLen;
+  char *pPktBuf;
+
+  // REQUEST holder
+  char ucReqMsg[11] = REQ_STREAM; // +1 to add null at last
+
+  // Packet details
+  unsigned char  *pSteroPkt;
+  unsigned char  *pFrameL;
+  unsigned char  *pFrameR;
+
+  // local variable point to the allocated buffers
+  StereoPacket   *pPkt;
+  StereoMetadata *pMeta;
+
+  // Assign the object pointers
+  pPkt       = pStereoObj->pStereoPacket;
+  phSock     = &(pStereoObj->hSockObj.hSock);
+  //phSockObj  = &(pLocObj->hSockStereo);
+
+  // Recv client details
+  phCliAddr = &(pStereoObj->hSockObj.hClientAddr);
+  piLenAddr = &(pStereoObj->hSockObj.iLenClientAddr);
+
+  // streaming buffer address and its length
+  // initialize local variables
+  //pPktBuf = (char *)pPkt;
+  pPktBuf = (char *)pPkt;
+  pMeta   = &(pPkt->stMetadata.stStereoMetadata);
+
+  //iPktLen = sizeof(StereoPacket);
+  iPktLen = sizeof(Metadata) + pMeta->uiRightJpegSize + pMeta->uiLeftJpegSize;
+
+  *piLenAddr = sizeof(sockaddr_in);
+
+  // RECEIVE STEREO PACKET DATA
+  printf(TAG_SOUT "Wait to receive request. iPktLen:%d, addr:%d, len:%d \n", iPktLen, phCliAddr, *piLenAddr);
+  iRetVal = SocketUDP_RecvFrom(phSock, cReqBuf, sizeof(REQ_STREAM), phCliAddr, piLenAddr);
+  if (iRetVal < 0 ) { goto ret_err; } // If no client, it will be -1, it is okay to retry as a server
+
+  if (strcmp(cReqBuf, REQ_STREAM) != 0) {
+    cout << TAG_SOUT "Error: expected REQ_STREAM, received:" << cReqBuf << endl;
+    goto ret_err;
+  }
+
+  printf(TAG_SOUT "Received request of len:%d, Req:%s\n", iRetVal, cReqBuf);
+
+ if (iRetVal > 0) {
+
+	  // Process the packet
+	  
+	  // SEND THE RESPONSE
+	  iRetVal = SocketUDP_SendTo(phSock, pPktBuf, iPktLen,
+		  phCliAddr, *piLenAddr);
+
+	  if (iRetVal < 0) { goto ret_err; }
+  }
+  
+  return 0;
+ret_err:
+  printf(TAG_SOUT "Error: ret:%d, NetErr:%d\n", iRetVal, WSAGetLastError());
+  return -1;
+
+ 
+}
+
+int StereoOutput_Packet1(StereoObject *pStereoObj)
 {
   int iRetVal;
  
   // REQUEST holder
-  char req_msg[MAX_REQ_SIZE + 1]; // +1 to add null at last
+  char cReqBuf[MAX_REQ_SIZE + 1]; // +1 to add null at last
 
   // local variable point to the allocated buffers
   StereoPacket   *pPkt;
@@ -182,7 +259,7 @@ int StereoOutput_Packet(StereoObject *pStereoObject)
   int iRemainLen;
 
   // initialize local variables
-  pPkt        = pStereoObject->stStereoPacket;
+  pPkt        = pStereoObj->pStereoPacket;
   pPktBuf = (const char *)pPkt;
   pMeta        = &(pPkt->stMetadata.stStereoMetadata);
 
@@ -190,11 +267,11 @@ int StereoOutput_Packet(StereoObject *pStereoObject)
 
   // Receive the request
   printf(TAG_SOUT "Waiting for request\n");
-  iRetVal = recvfrom(s, req_msg, MAX_REQ_SIZE, 0, &sockClientAddr, &iLenSockClient);
+  iRetVal = recvfrom(s, cReqBuf, MAX_REQ_SIZE, 0, &sockClientAddr, &iLenSockClient);
   if (iRetVal < 0 ) { goto ret_err; }
 
-  if (strcmp(req_msg, REQ_STREAM) != 0) {
-    cout << TAG_SOUT "Error: expected REQ_STREAM, received:" << req_msg << endl;
+  if (strcmp(cReqBuf, REQ_STREAM) != 0) {
+    cout << TAG_SOUT "Error: expected REQ_STREAM, received:" << cReqBuf << endl;
     goto ret_err;
   }
 
@@ -221,7 +298,7 @@ int StereoOutput_Packet(StereoObject *pStereoObject)
   }
   return 0;
 ret_err:
-  printf(TAG_SOUT "Error: sending %s, ret:%d, NetErr:%d\n", req_msg, iRetVal, WSAGetLastError());
+  printf(TAG_SOUT "Error: sending %s, ret:%d, NetErr:%d\n", cReqBuf, iRetVal, WSAGetLastError());
   return -1;
 
 }
@@ -293,7 +370,44 @@ int NetworkServerInit()
 
   return 0;
 }
-int StereoOutput_Init(StereoObject *pStereoObject)
+
+//
+// StereoOutput_Init
+//
+// Allocated the packet memory
+// Create a Server Socket
+int StereoOutput_Init(StereoObject *pStereoObj)
+{
+
+  int iRetVal = 0;
+
+  // Socket interfaces
+  SOCKET      *phSock;
+  SOCKADDR_IN *phServAddr;
+  int         iPortNum;  
+  char        cIPAddr[16];
+
+  printf("In StereoOutput_Init\n");
+
+  // TODO: Ring buffer
+  // fill the object
+  phSock     = &(pStereoObj->hSockObj.hSock);
+  phServAddr = &(pStereoObj->hSockObj.hServAddr),
+  iPortNum   = SOCK_PORT_STEREO;
+  memcpy(cIPAddr, SOCK_IP_STEREO, strlen(SOCK_IP_STEREO));
+
+  iRetVal = SocketUDP_InitServer(phSock, phServAddr, iPortNum, cIPAddr);
+  if (iRetVal != 0) {
+    printf("Error: In SocketUDP_InitServer\n");
+    return -1;
+  }
+  SocketUDP_PrintIpPort(phSock, "Init");
+
+  printf("SocketUDP_InitServer... OK\n");
+  return 0;
+}
+
+int StereoOutput_Init1(StereoObject *pStereoObj)
 {
   printf("In stereo_output_init\n");
 

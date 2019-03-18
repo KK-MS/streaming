@@ -60,46 +60,46 @@ typedef struct StereoMetadata {
 } StereoMetadata;
 
 typedef struct GTMapMetadata {
-	// Object count
-	int iObjectCount;
-	int aObjectType[8];
+  // Object count
+  int iObjectCount;
+  int aObjectType[8];
 } GTMapMetadata;
 
 typedef struct LocalizeMetadata {
-	// Localized values.
-	unsigned int   uiLocLat;
-	unsigned int   uiLocLong;
-	unsigned int   uiAccLat;
-	unsigned int   uiAccLong;
+  // Localized values.
+  unsigned int   uiLocLat;
+  unsigned int   uiLocLong;
+  unsigned int   uiAccLat;
+  unsigned int   uiAccLong;
 } LocalizeMetadata;
 
 typedef struct Metadata {
-	ImuMetadata      stImuMetadata;
-	StereoMetadata   stStereoMetadata;
-	GTMapMetadata    stGTMapMetadata;
-	LocalizeMetadata stLocalizeMetadata;
+  ImuMetadata      stImuMetadata;
+  StereoMetadata   stStereoMetadata;
+  GTMapMetadata    stGTMapMetadata;
+  LocalizeMetadata stLocalizeMetadata;
 } Metadata;
 
 
 typedef struct StereoPacket
 {
-	// Metadata
-	Metadata stMetadata;
+  // Metadata
+  Metadata stMetadata;
 
-	// stereo camera 2 x JPEG frames, each frame max size MAX_FRAME_SIZE
-	unsigned char ucJpegFrames[MAX_FRAME_SIZE * 2];
+  // stereo camera 2 x JPEG frames, each frame max size MAX_FRAME_SIZE
+  unsigned char ucJpegFrames[MAX_FRAME_SIZE * 2];
 
 }StereoPacket;
 
 // Request for the object list
 typedef struct GTMapItemStruct
 {
-    unsigned int iType;
-    unsigned int iGTMapLat;
-    unsigned int iGTMapLong;
-    unsigned int iRelativeDistance;
-    unsigned int iDescriptorLength;
-    unsigned char ucDescriptor[2000];
+  unsigned int iType;
+  unsigned int iGTMapLat;
+  unsigned int iGTMapLong;
+  unsigned int iRelativeDistance;
+  unsigned int iDescriptorLength;
+  unsigned char ucDescriptor[2000];
 
 } GTMapItem;
 
@@ -110,18 +110,18 @@ typedef struct GTMapItemStruct
 // real world (x,y,z) function used by GTMap is used.
 typedef struct GTMapPacket
 {
-	// Request type
-	int         iRequestType;
+  // Request type
+  int         iRequestType;
 
-    // Request data
-	ImuMetadata stImuMetadata;
+  // Request data
+  ImuMetadata stImuMetadata;
 
-    // Response for REQ_CAL_COORDINATES
-    LocalizeMetadata stCalCoordinate;
+  // Response for REQ_CAL_COORDINATES
+  LocalizeMetadata stCalCoordinate;
 
-    // Response data for REQ_TRAFFIC_SIGNS
-    int          iItemCount;
-    GTMapItem    aItemInfo[5];
+  // Response data for REQ_TRAFFIC_SIGNS
+  int          iItemCount;
+  GTMapItem    aItemInfo[5];
 
 } GTMapPacket;
 

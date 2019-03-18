@@ -45,9 +45,10 @@ int StereoInput_FromCamera(StereoObject *pStereoObject)
   unsigned char  *pFrameR;
   int iDatabytes;
 
-  pPkt    = pStereoObject->stStereoPacket;
+  pPkt    = pStereoObject->pStereoPacket;
   pMeta = &(pPkt->stMetadata.stStereoMetadata);
-  
+
+  // get the frame pointers
   pFrameL = pStereoObject->pFrameLeft;
   pFrameR = pStereoObject->pFrameRight;
   
@@ -91,7 +92,7 @@ int StereoInput_Deinit(StereoObject *pStereoObject)
   // Free the memory
   free(pStereoObject->pFrameLeft);
   free(pStereoObject->pFrameRight);
-  free(pStereoObject->stStereoPacket);
+  free(pStereoObject->pStereoPacket);
   
   return 0;
 }
@@ -104,6 +105,7 @@ int StereoInput_Init(StereoObject *pStereoObject)
 
   StereoMetadata *pMeta;
   StereoPacket   *pPkt;
+
   unsigned char  *pFrameL;
   unsigned char  *pFrameR;
   
@@ -115,6 +117,9 @@ int StereoInput_Init(StereoObject *pStereoObject)
   pPkt     = (StereoPacket *) malloc(sizeof(StereoPacket));
   pMeta    = &(pPkt->stMetadata.stStereoMetadata);
   
+  // DEBUG: Init the unique seq with unique Timestamp value
+  pPkt->stMetadata.stImuMetadata.ulTimestamp = 1;
+
   // Allocate memory for raw frame data
   pFrameL  = (uchar *) malloc(MAX_FRAME_SIZE);
   pFrameR  = (uchar *) malloc(MAX_FRAME_SIZE);
@@ -133,7 +138,7 @@ int StereoInput_Init(StereoObject *pStereoObject)
   hVLeft.read(frame);
 
   // fill the object
-  pStereoObject->stStereoPacket = pPkt;
+  pStereoObject->pStereoPacket = pPkt;
   pStereoObject->pFrameLeft     = pFrameL; 
   pStereoObject->pFrameRight    = pFrameR;
 

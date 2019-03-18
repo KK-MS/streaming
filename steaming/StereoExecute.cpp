@@ -68,7 +68,7 @@ void ImageShowDebug(StereoObject *pStereoObject)
 	unsigned char  *pFrameL;
 	unsigned char  *pFrameR;
 
-	pPkt = pStereoObject->stStereoPacket;
+	pPkt = pStereoObject->pStereoPacket;
 	pMeta = &(pPkt->stMetadata.stStereoMetadata);
 
 	pFrameL = pStereoObject->pFrameLeft;
@@ -103,7 +103,9 @@ void StereoExecute_Scheduler(void *param)
 	int ret_val = 0;
 
 	StereoObject *pStereoObject = (StereoObject *)param;
+	unsigned long ts;
 
+	int iLoopCount = 0;
 	// for debug: open the required windows
 	//OpenDisplayWindows();
 
@@ -115,9 +117,8 @@ void StereoExecute_Scheduler(void *param)
 		//if (ret_val) { goto err_ret; }
 
 		// OUTPUT => e.g. METADATA
-		//ret_val = stereo_output_request(stereo_packet);
-		//if (ret_val) { goto err_ret; }
-
+		ts = pStereoObject->pStereoPacket->stMetadata.stImuMetadata.ulTimestamp++;
+		printf("\n\n ----------------------------------------------- [%d]\n", ts);
 		// INPUT: CAMERA IMAGEs (TWO Camera data)
 		ret_val = StereoInput_FromCamera(pStereoObject);
 		if (ret_val) { goto err_ret; }
@@ -138,7 +139,7 @@ void StereoExecute_Scheduler(void *param)
 		//ImageShowDebug(pStereoObject);
 
 		//  wait until ESC key
-		if (cv::waitKey(50) == 27) { // delay: Tune it.
+		if (cv::waitKey(10) == 27) { // delay: Tune it.
 			break;
 		}
 		
