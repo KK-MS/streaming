@@ -73,7 +73,7 @@ void StereoExecute_Scheduler(void *param)
     //  wait until ESC key
     if (cv::waitKey(10) == 27)
       break;
-
+  }
 err_ret:
   destroyAllWindows();
   printf("%s: thread closing: %d\n", __func__, iRetVal);
