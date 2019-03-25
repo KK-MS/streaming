@@ -33,176 +33,115 @@ using namespace cv;
 // Thread, scheduler
 static HANDLE hStreamingScheduler;
 
-#if (DEBUG_STEREO_INPUT | DEBUG_STEREO_OUTPUT |DEBUG_STEREO_JPEG | DEBUG_STEREO_DEBUG )
-
-void OpenDisplayWindows()
-{
-#ifdef DEBUG_STEREO_INPUT
-	namedWindow(WINDOW_STEREO_INPUT, WINDOW_NORMAL);
-#endif // DEBUG_STEREO_INPUT
-
-#if DEBUG_STEREO_OUTPUT
-	namedWindow(WINDOW_STEREO_OUTPUT, WINDOW_NORMAL);
-#endif // DEBUG_STEREO_OUTPUT
-
-#if DEBUG_STEREO_JPEG
-	namedWindow(WINDOW_STEREO_JPEG, WINDOW_NORMAL);
-#endif // DEBUG_STEREO_JPEG
-
-#if DEBUG_STEREO_DEBUG
-	namedWindow(WINDOW_STEREO_DEBUG, WINDOW_NORMAL);
-#endif // DEBUG_STEREO_DEBUG
-}
-#else
-void OpenDisplayWindows() {}
-#endif
-
-void debug_mat(Mat &mat_obj, const char *mat_name);
-#if (DEBUG_STEREO_INPUT | DEBUG_STEREO_OUTPUT |DEBUG_STEREO_JPEG | DEBUG_STEREO_DEBUG )
-void ImageShowDebug(StereoObject *pStereoObject)
-{
-	Mat cam_frame;
-
-	StereoPacket   *pPkt;
-	StereoMetadata *pMeta;
-	unsigned char  *pFrameL;
-	unsigned char  *pFrameR;
-
-	pPkt = pStereoObject->pStereoPacket;
-	pMeta = &(pPkt->stMetadata.stStereoMetadata);
-
-	pFrameL = pStereoObject->pFrameLeft;
-	pFrameR = pStereoObject->pFrameRight;
-
-	printf("Ex1 %x %x %x %x i:%d\n", pFrameL[0], pFrameL[1], pFrameL[2], pFrameL[3], pMeta->uiFrameBytes);
-	
-	Mat mGrayScaleLeft(Size(pMeta->uiFrameWidth, pMeta->uiFrameHeight), CV_8UC1, pFrameL);
-
-#if DEBUG_STEREO_INPUT
-	imshow(WINDOW_STEREO_INPUT, mGrayScaleLeft);
-	debug_mat(mGrayScaleLeft, "Exe_input");
-#endif // DEBUG_STEREO_INPUT
-	
-	
-	//cv::waitKey(0);
-}
-#else
-void ImageShowDebug(StereoObject *pStereoObject) {}
-#endif
-
-/**
-* StereoExecute_Scheduler
-*
-* This is the localize process scheduler.
-* It schedules the video capture from camera,
-* convert the Camera Raw Frame to compressed JPEG format,
-* and transmit the metadata and frames when requested.
-*/
+//
+// StereoExecute_Scheduler
+//
+// This is the localize process scheduler.
+// It schedules the capture of Metadata, and stereo cameras frames.
+// Convert the Camera Raw Frame to compressed JPEG format,
+// and transmit the metadata and frames when requested.
+//
 void StereoExecute_Scheduler(void *param)
 {
-	int ret_val = 0;
+  int iRetVal = 0;
 
-	StereoObject *pStereoObject = (StereoObject *)param;
-	unsigned long ts;
+  StereoObject *pStereoObject = (StereoObject *)param;
+  unsigned long ulTimeStamp;
 
-	int iLoopCount = 0;
-	// for debug: open the required windows
-	//OpenDisplayWindows();
+  int iLoopCount = 0;
 
-	// enter into scheduling
-	while (1) {
+  // Enter into scheduling
+  while (1) {
 
-		// IMU DATA + CAMERA IMAGEs
-		//ret_val = StereoInput_Metadata(pStereoObject);
-		//if (ret_val) { goto err_ret; }
+    // IMU Data + camera images
+    //iRetVal = StereoInput_Metadata(pStereoObject);
+    //if (iRetVal) { goto err_ret; }
 
-		// OUTPUT => e.g. METADATA
-		ts = pStereoObject->pStereoPacket->stMetadata.stImuMetadata.ulTimestamp++;
-		printf("\n\n ----------------------------------------------- [%d]\n", ts);
-		// INPUT: CAMERA IMAGEs (TWO Camera data)
-		ret_val = StereoInput_FromCamera(pStereoObject);
-		if (ret_val) { goto err_ret; }
-		//cv::waitKey(10);
+    // DEBUG print. Time stamp
+    ulTimeStamp = pStereoObject->pStereoPacket->stMetadata.stImuMetadata.ulTimestamp++;
+    printf("\n\n ----------------------------------------------- [%d]\n", ulTimeStamp);
 
-		// PROCESS: TO JPEG
-		StereoProcess_ToJpeg(pStereoObject);
-		if (ret_val) { goto err_ret; }
+    // INPUT: CAMERA Images (two camera data)
+    iRetVal = StereoInput_FromCamera(pStereoObject); if (iRetVal) { goto err_ret; }
 
-		//ret_val = StereoInput_Init(pStereoObject);
-		//if (ret_val) { goto err_ret; }
+    // PROCESS: To JPEG
+    StereoProcess_ToJpeg(pStereoObject); if (iRetVal) { goto err_ret; }
 
-		// OUTPUT:e.g. IMAGES
-		ret_val = StereoOutput_Packet(pStereoObject);
-		//ret_val = stereo_output_request(ptr_stereo_object);
-		//if (ret_val) { goto err_ret; }
+    // OUTPUT:e.g. Images
+    iRetVal = StereoOutput_Packet(pStereoObject); if (iRetVal) { goto err_ret; }
 
-		//ImageShowDebug(pStereoObject);
-
-		//  wait until ESC key
-		if (cv::waitKey(10) == 27) { // delay: Tune it.
-			break;
-		}
-		
-	}
+    //  wait until ESC key
+    if (cv::waitKey(10) == 27)
+      break;
 
 err_ret:
-	destroyAllWindows();
-	printf("%s: thread closing: %d\n", __func__, ret_val);
+  destroyAllWindows();
+  printf("%s: thread closing: %d\n", __func__, iRetVal);
 }
 
 //
 // StereoExecute_Termination
-// 
+//
 // Termination will wait for the schduler thread to be terminated,
-// free the allocated resources and then terminate main process.
-// 
+// free the allocated resources in the thread and then
+// terminate main process.
+//
 int StereoExecute_Termination(StereoObject *pStereoObject)
 {
-	// Terminate will only wait for the thread to exit and
-	// exit the module gracefully.
+  // Terminate will only wait for the thread to exit and
+  // exit the module gracefully.
 
-	// WAIT for Server loop to end
-	printf("Stereo: Starting stereo_terminate\n");
-	WaitForSingleObject(hStreamingScheduler, INFINITE);
-	printf("Stereo: ending stereo_terminate\n");
+  // WAIT for Server loop to end
+  printf("Stereo: Starting stereo_terminate\n");
+  WaitForSingleObject(hStreamingScheduler, INFINITE);
+  printf("Stereo: ending stereo_terminate\n");
 
-	return 0;
+  return 0;
 }
 
-// 
+//
 // StereoExecute_Start
-// 
+//
 // Starts the execution processing by starting the scheduler.
 //
 int StereoExecute_Start(StereoObject *pStereoObject)
 {
-	// start stereo module scheduler
-	hStreamingScheduler =
-		(HANDLE)_beginthread(StereoExecute_Scheduler, 0, (void *)pStereoObject);
+  // start stereo module scheduler
+  hStreamingScheduler =
+    (HANDLE)_beginthread(StereoExecute_Scheduler, 0, (void *)pStereoObject);
 
 
-	return 0;
+  return 0;
 }
 
-
+//
+// main
+//
+// main function of the stereo module.
+//
+// Create stereo object, init the input and output resources
+// Start the stereo module process
+//
 int main()
 {
 
-	StereoObject *pStereoObject;
+  StereoObject *pStereoObject;
 
-	pStereoObject = (StereoObject *)malloc(sizeof(StereoObject));
-	if (!(pStereoObject)) { printf("Error: malloc\n"); return -1; }
+  pStereoObject = (StereoObject *)malloc(sizeof(StereoObject));
+  if (!(pStereoObject)) { printf("Error: malloc\n"); return -1; }
 
-	// Initialize the input interfaces
-	StereoInput_Init(pStereoObject);
+  // Initialize the input interfaces
+  // Input: IMU data + Stereo Camera data
+  StereoInput_Init(pStereoObject);
 
-	// Initialize the output interface.
-	// Output is a stream of IMU data + Stereo camera frames
-	StereoOutput_Init(pStereoObject);
+  // Initialize the output interface.
+  // Output is a stream of IMU data + Stereo camera frames
+  StereoOutput_Init(pStereoObject);
 
-	StereoExecute_Start(pStereoObject);
+  // Start the stereo module process
+  StereoExecute_Start(pStereoObject);
 
-	cv::waitKey(0);
+  cv::waitKey(0);
 
-	return 0;
+  return 0;
 }

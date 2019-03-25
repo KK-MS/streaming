@@ -99,14 +99,14 @@ int SocketUDP_SendTo(SOCKET *phSock, char *pDataBuf, int iDataSize,
 
     if (iTxLen > MAX_UDP_DATA_SIZE) { iTxLen = MAX_UDP_DATA_SIZE; }
 
-	printf(TAG_SOCK "B4 sendto: iDataSize:%d len:%d AccLen:%d\n", iDataSize, iTxLen, iAccTxLen);
-	SocketUDP_PrintIpPort(phSock, "SendTo");
+    printf(TAG_SOCK "B4 sendto: iDataSize:%d len:%d AccLen:%d\n", iDataSize, iTxLen, iAccTxLen);
+    SocketUDP_PrintIpPort(phSock, "SendTo");
     iRetVal = sendto(*phSock, pSendBuf, iTxLen, 0, pSockDestAddr, iSockSize);
     if (iRetVal < 0) { return -1; }
-	
+
     pSendBuf  += iRetVal;
     iAccTxLen += iRetVal;
-	printf(TAG_SOCK "A4 sendto: iRetVal:%d len:%d AccLen:%d\n", iRetVal, iTxLen, iAccTxLen);
+    printf(TAG_SOCK "A4 sendto: iRetVal:%d len:%d AccLen:%d\n", iRetVal, iTxLen, iAccTxLen);
 
     if (iRetVal < iTxLen) { 
       // Should not happend, Track it!!. 
@@ -145,7 +145,7 @@ int SocketUDP_Deinit(SOCKET *phSock)
   closesocket(*phSock);
   WSACleanup();
 
-  printf("localize network_deinit ends\n");
+  printf("localize SocketUDP_Deinit ends\n");
 
   return 0;
 }
@@ -198,7 +198,7 @@ int SocketUDP_InitServer(SOCKET *phSock, SOCKADDR_IN *phServAddr,
 
   phServAddr->sin_family      = AF_INET;
   phServAddr->sin_addr.s_addr = inet_addr(pServerIP);
-  phServAddr->sin_port = htons(iPortNum);
+  phServAddr->sin_port        = htons(iPortNum);
 
   *phSock = socket(AF_INET, SOCK_DGRAM, 0);
   if (*phSock == INVALID_SOCKET) { goto ret_err; }

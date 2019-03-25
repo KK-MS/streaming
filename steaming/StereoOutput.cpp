@@ -8,7 +8,7 @@
 #include <iomanip>
 
 // File operation
-#include <fstream> 
+#include <fstream>
 
 // Threads: to run streaming server
 #include <process.h>
@@ -18,7 +18,7 @@
 
 // Need older API support e.g. IPV4. Else result in "Error E0040"
 // E0040 expected an identifier ws2def.h
-#define WIN32_LEAN_AND_MEAN 
+#define WIN32_LEAN_AND_MEAN
 
 #include <windows.h> // DEFAULT_PORT
 #include <ws2tcpip.h> // getaddrinfo, includes #include <winsock2.h>
@@ -69,95 +69,13 @@ int file_write(std::vector<unsigned char> &buf) {
 }
 
 //// NETWORK /////
-// 
+//
 // Server with UDP connection
 //
-#define INPUT_SERVER_PORT     27015 
+#define INPUT_SERVER_PORT     27015
 #define INPUT_SERVER_IP     "127.0.0.1"
 static SOCKET s;
 static SOCKADDR_IN servaddr;
-
-#if 0
-int stream_to_network(std::vector<unsigned char> &buf)
-{
-  char* data = reinterpret_cast<char*>(buf.data());
-
-  // Program assume the file is already opened.
-  myFile.write(data, buf.size());
-  return 0;
-}
-
-//int stereo_output_camera(std::vector<unsigned char> &buf)
-int stereo_output_camera(unsigned char *frame_buffer)
-{
-  std::vector<unsigned char> vec_frame_buffer;
-
-  vec_frame_buffer.insert(vec_frame_buffer.end(), frame_buffer, frame_buffer + FRAME_SIZE);
-
-  //file_write(buf);
-  //stream_to_network(buf);
-
-  return 0;
-}
-
-
-
-int StereoOutput_Packet1(StereoObject *pStereoObj)
-{
-  int ret_val;
-
-  // Network related variables
-  sockaddr cliaddr;
-  int len = sizeof(sockaddr_in);
-
-  // Metadata variables
-  char cReqBuf[MAX_REQ_SIZE + 1]; // +1 to add null at last
-  const char *res_meta = (const char *)& (pStereoObj->meta_pkt);
-  int len_meta = sizeof(pStereoObj->meta_pkt);
-
-  // stereo data variables
-  char req_imgs[] = REQ_IMAGES;
-  char *res_imgs = (char *)pStereoObj->ptr_jpeg_stream;
-
-  int len_imgs = pStereoObj->meta_pkt.jpeg_left_size
-    + pStereoObj->meta_pkt.jpeg_right_size;
-
-  // Process command metadata
-  cout << TAG_SOUT "recvfrom for REQ_METDATA" << endl;
-  if ((ret_val = recvfrom(s, cReqBuf, MAX_REQ_SIZE, 0, &cliaddr, &len)) < 0) { goto ret_err; }
-  cReqBuf[ret_val] = '\0';
-
-
-  if (strcmp(cReqBuf, REQ_METADATA) != 0) {
-    cout << TAG_SOUT "Error: expected REQ_METDATA, received:" << cReqBuf << endl;
-    goto ret_err;
-  }
-
-  cout << TAG_SOUT "sendto for REQ_METDATA" << endl;
-  if (ret_val = sendto(s, res_meta, sizeof(metadata_packet), 0, &cliaddr, len) < 0) { goto ret_err; }
-
-  // Process command to send stereo images
-  cout << TAG_SOUT "recvfrom for REQ_IMAGES" << endl;
-  if ((ret_val = recvfrom(s, cReqBuf, MAX_REQ_SIZE, 0, &cliaddr, &len)) < 0) { goto ret_err; }
-
-  cout << TAG_SOUT "sendto for REQ_IMAGES" << endl;
-  if (strcmp(cReqBuf, REQ_IMAGES) != 0) {
-    cout << TAG_SOUT "Error: expected REQ_IMAGES, received:" << cReqBuf << endl;
-  }
-  cout << TAG_SOUT "REQ_IMAGES, size:" << len_imgs << endl;
-
-  if (len_imgs > 65530) len_imgs = 6553; ////////////////////// only for test! of UDP,  TODO: in UDP max packet looping
-
-  if ((ret_val = sendto(s, res_imgs, len_imgs, 0, &cliaddr, len)) < 0) { goto ret_err; }
-
-  return 0;
-
-ret_err:
-  printf(TAG_SOUT "Error: sending %s, ret:%d, NetErr:%d\n", cReqBuf, ret_val, WSAGetLastError());
-  return -1;
-
-}
-#endif
 
 int StereoOutput_Packet(StereoObject *pStereoObj)
 {
@@ -188,7 +106,6 @@ int StereoOutput_Packet(StereoObject *pStereoObj)
   // Assign the object pointers
   pPkt       = pStereoObj->pStereoPacket;
   phSock     = &(pStereoObj->hSockObj.hSock);
-  //phSockObj  = &(pLocObj->hSockStereo);
 
   // Recv client details
   phCliAddr = &(pStereoObj->hSockObj.hClientAddr);
@@ -217,40 +134,40 @@ int StereoOutput_Packet(StereoObject *pStereoObj)
 
   printf(TAG_SOUT "Received request of len:%d, Req:%s\n", iRetVal, cReqBuf);
 
- if (iRetVal > 0) {
+  if (iRetVal > 0) {
 
-	  // Process the packet
-	  
-	  // SEND THE RESPONSE
-	  iRetVal = SocketUDP_SendTo(phSock, pPktBuf, iPktLen,
-		  phCliAddr, *piLenAddr);
+    // Process the packet
 
-	  if (iRetVal < 0) { goto ret_err; }
+    // SEND THE RESPONSE
+    iRetVal = SocketUDP_SendTo(phSock, pPktBuf, iPktLen,
+        phCliAddr, *piLenAddr);
+
+    if (iRetVal < 0) { goto ret_err; }
   }
-  
+
   return 0;
 ret_err:
   printf(TAG_SOUT "Error: ret:%d, NetErr:%d\n", iRetVal, WSAGetLastError());
   return -1;
 
- 
+
 }
 
 int StereoOutput_Packet1(StereoObject *pStereoObj)
 {
   int iRetVal;
- 
+
   // REQUEST holder
   char cReqBuf[MAX_REQ_SIZE + 1]; // +1 to add null at last
 
   // local variable point to the allocated buffers
   StereoPacket   *pPkt;
   StereoMetadata *pMeta;
-  
+
   // Network related variables
   sockaddr sockClientAddr;
   int iLenSockClient = sizeof(sockaddr_in);
-  
+
   // Packet details
   const char *pPktBuf;
   const char *pSendBuf;
@@ -286,11 +203,13 @@ int StereoOutput_Packet1(StereoObject *pStereoObj)
       iSendLen = MAX_UDP_DATA_SIZE;
     }
 
-	printf(TAG_SOUT "sendto: len:%d. M:%d, rj:%d, lj:%d\n", iSendLen, sizeof(Metadata), pMeta->uiRightJpegSize, pMeta->uiLeftJpegSize);
+    printf(TAG_SOUT "sendto: len:%d. M:%d, rj:%d, lj:%d\n", iSendLen, 
+        sizeof(Metadata), pMeta->uiRightJpegSize, pMeta->uiLeftJpegSize);
+
     iRetVal = sendto(s, pSendBuf, iSendLen, 0, &sockClientAddr, iLenSockClient);
 
     if (iRetVal < 0) { goto ret_err; }
-    else { 
+    else {
       iRemainLen -= iRetVal;
       pSendBuf += iRetVal;
     }
@@ -302,71 +221,18 @@ ret_err:
   return -1;
 
 }
-
-
-
-int network_deinit() {
-
-  // deinit the network connection
-  closesocket(s);
-  WSACleanup();
-
-  cout << "stereo network_deinit ends" << endl;
-
-  return 0;
-}
-
-
-int StereoOutput_Deinit(StereoObject *ptr_stereo_object)
+int StereoOutput_Deinit(StereoObject *pStereoObj)
 {
+  // Socket interfaces
+  SOCKET      *phSock;
+
+  phSock     = &(pStereoObj->hSockObj.hSock);
 
 #ifdef DEBUG_OUTPUT_FILE
   myFile.close();
 #endif // DEBUG_OUTPUT_FILE
 
-  network_deinit();
-
-  return 0;
-}
-
-
-
-int NetworkServerInit()
-{
-  WSADATA wsaData;
-  int iResult;
-
-  // Initialize Winsock
-  iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-  if (iResult != 0) {
-    printf("WSAStartup failed with error: %d\n", iResult);
-    return 1;
-  }
-
-  //Create socket
-  s = socket(AF_INET, SOCK_DGRAM, 0);
-  if (s == INVALID_SOCKET) {
-    printf("Error localize_network_input_init socket %d\n", WSAGetLastError());
-    return false; //Couldn't create the socket
-  }
-
-  servaddr.sin_family = AF_INET;
-  servaddr.sin_port = htons(INPUT_SERVER_PORT); //Port to connect on
-  servaddr.sin_addr.s_addr = inet_addr(INPUT_SERVER_IP);
-  //servaddr.sin_port = IPPROTO_UDP;
-
-  // Setup the UDP listening socket
-  iResult = bind(s, (struct sockaddr*) &servaddr, (int)sizeof(servaddr));
-  if (iResult < 0) {
-    printf("bind failed with error: %d\n", WSAGetLastError());
-    closesocket(s);
-    WSACleanup();
-    return 1;
-  }
-
-  // cout << "Starting thread" << endl;
-  // gTerminateServer == FALSE;
-  // hServerThread = (HANDLE)_beginthread(network_udp_server, 0, NULL);
+  SocketUDP_Deinit(phSock);
 
   return 0;
 }
@@ -384,7 +250,7 @@ int StereoOutput_Init(StereoObject *pStereoObj)
   // Socket interfaces
   SOCKET      *phSock;
   SOCKADDR_IN *phServAddr;
-  int         iPortNum;  
+  int         iPortNum;
   char        cIPAddr[16];
 
   printf("In StereoOutput_Init\n");
@@ -407,68 +273,52 @@ int StereoOutput_Init(StereoObject *pStereoObj)
   return 0;
 }
 
-int StereoOutput_Init1(StereoObject *pStereoObj)
-{
-  printf("In stereo_output_init\n");
-
-#ifdef DEBUG_OUTPUT_FILE
-  file_open();
-#endif // DEBUG_OUTPUT_FILE
-
-  if (NetworkServerInit() != 0) {
-    printf("Error: In NetworkServerInit\n");
-    return -1;
-  }
-  printf("NetworkServerInit ... OK\n");
-  return 0;
-}
-
 // Error code links:
 // https://docs.microsoft.com/en-us/windows/desktop/debug/system-error-codes--0-499-
 //
 // https://docs.microsoft.com/de-de/windows/desktop/WinSock/windows-sockets-error-codes-2
-// WSAEINTR 10004: Interrupted function call. 
+// WSAEINTR 10004: Interrupted function call.
 //    A blocking operation was interrupted by a call to WSACancelBlockingCall.
-// WSAEFAULT 10014: Bad address. The system detected an invalid pointer address 
-//    in attempting to use a pointer argument of a call. 
-//    This error occurs if an application passes an invalid pointer value, 
-//    or if the length of the buffer is too small. For instance, if the length 
+// WSAEFAULT 10014: Bad address. The system detected an invalid pointer address
+//    in attempting to use a pointer argument of a call.
+//    This error occurs if an application passes an invalid pointer value,
+//    or if the length of the buffer is too small. For instance, if the length
 //    of an argument, which is a sockaddr structure, is smaller than the sizeof(sockaddr).
 // WSAENOTSOCK 10038: Socket operation on nonsocket.
 // WSAEMSGSIZE 10040: Message too long.
-//   A message sent on a datagram socket was larger than the internal message 
-//   buffer or some other network limit, or the buffer used to receive a 
+//   A message sent on a datagram socket was larger than the internal message
+//   buffer or some other network limit, or the buffer used to receive a
 //   datagram was smaller than the datagram itself.
 // WSAEPROTONOSUPPORT 10043: Protocol not supported.
-//   The requested protocol has not been configured into the system, or no 
+//   The requested protocol has not been configured into the system, or no
 //   implementation for it exists.
 //   e.g. A socket call requests a SOCK_DGRAM socket, but specifies a stream protocol.
 // WSAEOPNOTSUPP 10045: Operation not supported.
 //   The attempted operation is not supported for the type of object referenced.
-//   Usually this occurs when a socket descriptor to a socket that cannot 
+//   Usually this occurs when a socket descriptor to a socket that cannot
 //   support this operation is trying to accept a connection on a datagram socket.
 // WSAEAFNOSUPPORT 10047: Address family not supported by protocol family.
-//    An address incompatible with the requested protocol was used. 
-//    All sockets are created with an associated address family 
+//    An address incompatible with the requested protocol was used.
+//    All sockets are created with an associated address family
 //    (i.e. AF_INET for Internet Protocols) and a generic protocol type
-//    (i.e. SOCK_STREAM). This error is returned if an incorrect protocol is 
-//    explicitly requested in the socket call, or if an address of the wrong 
+//    (i.e. SOCK_STREAM). This error is returned if an incorrect protocol is
+//    explicitly requested in the socket call, or if an address of the wrong
 //    family is used for a socket, for example, in sendto.
 // WSAEADDRNOTAVAIL 10049: Cannot assign requested address.
 //    The requested address is not valid in its context. This normally results
-//    from an attempt to bind to an address that is not valid for the local 
-//    computer. This can also result from connect, sendto, WSAConnect, 
-//    WSAJoinLeaf, or WSASendTo when the remote address or port is not valid 
+//    from an attempt to bind to an address that is not valid for the local
+//    computer. This can also result from connect, sendto, WSAConnect,
+//    WSAJoinLeaf, or WSASendTo when the remote address or port is not valid
 //    for a remote computer(for example, address or port 0).
 // WSAECONNRESET 10054: Connection reset by peer.
-//    An existing connection was forcibly closed by the remote host. This 
+//    An existing connection was forcibly closed by the remote host. This
 //    normally results if the peer application on the remote host is suddenly
-//    stopped, the host is rebooted, the host or remote network interface is 
-//    disabled, or the remote host uses a hard close (see setsockopt for more 
+//    stopped, the host is rebooted, the host or remote network interface is
+//    disabled, or the remote host uses a hard close (see setsockopt for more
 //    information on the SO_LINGER option on the remote socket).This error may
 //    also result if a connection was broken due to keep - alive activity detecting a failure while one or more operations are in progress.Operations that were in progress fail with WSAENETRESET.Subsequent operations fail with WSAECONNRESET.
-// WSAENOTCONN 10057: Socket is not connected. A request to send or receive 
-//    data was disallowed because the socket is not connected and (when 
+// WSAENOTCONN 10057: Socket is not connected. A request to send or receive
+//    data was disallowed because the socket is not connected and (when
 //    sending on a datagram socket using sendto) no address was supplied.
-//    Any other type of operation might also return this error—for example, 
+//    Any other type of operation might also return this error—for example,
 //    setsockopt setting SO_KEEPALIVE if the connection has been reset.

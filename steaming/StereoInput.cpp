@@ -18,13 +18,13 @@ using namespace cv;
 
 // Macros
 #define TAG_SINP "SInp: "
-#define WINDOW_STEREO_INPUT_DB "StereoInputDebug"
+//#define WINDOW_STEREO_INPUT_DB "StereoInputDebug"
 
 // Global variables
 static VideoCapture   hVLeft; // pointer to the handler of video input
 static VideoCapture   hVRight;
 
-// Function defination
+// Function definitions
 void debug_mat(Mat &mat_obj, const char *mat_name)
 {
   printf("Mat %s: H %d\n", mat_name, mat_obj.rows);
@@ -51,16 +51,16 @@ int StereoInput_FromCamera(StereoObject *pStereoObject)
   // get the frame pointers
   pFrameL = pStereoObject->pFrameLeft;
   pFrameR = pStereoObject->pFrameRight;
-  
+
   Mat mGrayScaleLeft(Size(pMeta->uiFrameWidth, pMeta->uiFrameHeight), CV_8UC1);
 
-  // Capature video frames
+  // Capture video frames
   hVLeft >> cam_frame;
 
   // Covert to gray scale
   cv::cvtColor(cam_frame, mGrayScaleLeft, CV_BGR2GRAY);
-  
-  // Note: Assignment of allocated buffer is not reliable. 
+
+  // Note: Assignment of allocated buffer is not reliable.
   // OpenCV will allocate internal buffer. Not worked here !!, so memcpy
   // Copy the data to our object buffer.
   iDatabytes = mGrayScaleLeft.total() * mGrayScaleLeft.elemSize(); // pMeta->uiFrameBytes
@@ -88,12 +88,12 @@ int StereoInput_Deinit(StereoObject *pStereoObject)
 
   // Release video handler
   hVLeft.release();
-  
+
   // Free the memory
   free(pStereoObject->pFrameLeft);
   free(pStereoObject->pFrameRight);
   free(pStereoObject->pStereoPacket);
-  
+
   return 0;
 }
 
@@ -108,25 +108,25 @@ int StereoInput_Init(StereoObject *pStereoObject)
 
   unsigned char  *pFrameL;
   unsigned char  *pFrameR;
-  
+
   printf("In StereoInput_Init\n");
 
   // TODO: Ring buffer
-  
+
   // Allocate memory stereo packet, i.e. metadata + jpeg frames bytes
   pPkt     = (StereoPacket *) malloc(sizeof(StereoPacket));
   pMeta    = &(pPkt->stMetadata.stStereoMetadata);
-  
+
   // DEBUG: Init the unique seq with unique Timestamp value
   pPkt->stMetadata.stImuMetadata.ulTimestamp = 1;
 
   // Allocate memory for raw frame data
   pFrameL  = (uchar *) malloc(MAX_FRAME_SIZE);
   pFrameR  = (uchar *) malloc(MAX_FRAME_SIZE);
-  
-  if ((pPkt == NULL) 
-	  || (pFrameL == NULL) 
-	  || (pFrameR == NULL) ) { 
+
+  if ((pPkt == NULL)
+	  || (pFrameL == NULL)
+	  || (pFrameR == NULL) ) {
 	printf("Error: malloc\n"); return -1; }
 
   // Open the left side video input
@@ -139,7 +139,7 @@ int StereoInput_Init(StereoObject *pStereoObject)
 
   // fill the object
   pStereoObject->pStereoPacket = pPkt;
-  pStereoObject->pFrameLeft     = pFrameL; 
+  pStereoObject->pFrameLeft     = pFrameL;
   pStereoObject->pFrameRight    = pFrameR;
 
   // fill the stereo metadata

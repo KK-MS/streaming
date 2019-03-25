@@ -1,19 +1,20 @@
 #pragma once
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <windows.h>
 
 // Socket interface object for sending and receiving
 typedef struct SockInterfaceStruct {
-	SOCKET      hSock;
-	SOCKADDR_IN hServAddr;
+  SOCKET      hSock;
+  SOCKADDR_IN hServAddr;
 
-	sockaddr hClientAddr;
-	int      iLenClientAddr;
+  sockaddr hClientAddr;
+  int      iLenClientAddr;
 
-	int    iPortNum;
-	char   cIPAddr[16];
-}SockObject;
+  int    iPortNum;
+  char   cIPAddr[16]; // IP4 xxx.xxx.xxx.xxx
+} SockObject;
 
+// Function declarations 
+
+int SocketUDP_SendServer2Client(SockObject *pSockObj, char *pDataBuf, int iDataSize);

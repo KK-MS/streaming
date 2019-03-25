@@ -28,6 +28,7 @@
 #define REQ_FRAME_LEFT   "frame_left"
 #define REQ_FRAME_RIGHT  "frame_right"
 #define REQ_TRAFFISIGNS  "trafficSigns"
+#define REQ_TS_INFO      "trafficSignsInfo"
 
 #define REQ_GTMAP_BASE    (400u)
 #define REQ_GTMAP_MARKS   (REQ_GTMAP_BASE + 1u)
@@ -38,24 +39,24 @@
 typedef unsigned char uchar;
 
 typedef struct ImuMetadata {
-	// IMU values. Written by IMU
-	unsigned long  ulTimestamp;
-	unsigned int   uiLatitude;
-	unsigned int   uiLongitude;
-	// TODO: other IMU variables should be appended
+  // IMU values. Written by IMU
+  unsigned long  ulTimestamp;
+  unsigned int   uiLatitude;
+  unsigned int   uiLongitude;
+  // TODO: other IMU variables should be appended
 } ImuMetadata;
 
 typedef struct StereoMetadata {
-	// Image packet. Written by stereo
-	unsigned int  uiLeftJpegSize;
-	unsigned int  uiRightJpegSize;
-	//unsigned int  uiJpegsSize;
+  // Image packet. Written by stereo
+  unsigned int  uiLeftJpegSize;
+  unsigned int  uiRightJpegSize;
+  //unsigned int  uiJpegsSize;
 
-	// Image features. Written by stereo
-	unsigned int  uiFrameWidth;
-	unsigned int  uiFrameHeight;
-	unsigned int  uiNumOfChannels;
-	unsigned int  uiFrameBytes;
+  // Image features. Written by stereo
+  unsigned int  uiFrameWidth;
+  unsigned int  uiFrameHeight;
+  unsigned int  uiNumOfChannels;
+  unsigned int  uiFrameBytes;
 
 } StereoMetadata;
 
@@ -129,10 +130,10 @@ typedef struct GTMapPacket
 #if 0
 typedef struct GTMapCoordinates
 {
-	// Request type
-	int iRequestType;
+  // Request type
+  int iRequestType;
 
-	// Request data
+  // Request data
     unsigned int iGTMapLat;
     unsigned int iGTMapLong;
 
@@ -146,6 +147,6 @@ typedef struct GTMapCoordinates
 
 typedef struct LocalizePacket
 {
-	// Metadata with localized values stored
-	Metadata stMetaPkt;
+  // Metadata with localized values stored
+  Metadata stMetaPkt;
 }LocalizePacket;
