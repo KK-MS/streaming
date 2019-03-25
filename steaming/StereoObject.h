@@ -23,18 +23,18 @@
 // 3. OUTPUT:  Send the MJPEG stream
 //
 typedef struct StereoObjectStruct {
-	// INOUT: Metadata
-	StereoPacket *pStereoPacket;
+  // INOUT: Metadata
+  StereoPacket *pStereoPacket;
 
-	// IN: RAW (obtained from camera are stored into)
-	unsigned char *pFrameLeft;  // Stereo Left camera data 
-	unsigned char *pFrameRight; // Stereo Right camera data 
+  // IN: RAW (obtained from camera are stored into)
+  unsigned char *pFrameLeft;  // Stereo Left camera data 
+  unsigned char *pFrameRight; // Stereo Right camera data 
 
-	// JPEG buffer handler
-	unsigned char *pJpegBufferWrite; // Stereo Right camera data 
+  // JPEG buffer handler
+  unsigned char *pJpegBufferWrite; // Stereo Right camera data 
 
-  // OUT: INTERFACING Variables
-	SockObject hSockObj;
+  // SERVER: Network interfacing variables
+  SockObject hSockObj;
 
 } StereoObject;
 
