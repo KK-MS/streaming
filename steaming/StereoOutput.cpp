@@ -85,7 +85,7 @@ int StereoOutput_Packet(StereoObject *pStereoObj)
   sockaddr *phCliAddr;
 
   // REQUEST holder
-  char cReqBuf[MAX_REQ_SIZE + 1]; // +1 to add null at last
+  char cReqBuf[MAX_REQ_CMD_SIZE]; 
 
   int *piLenAddr;
   int iPktLen;
@@ -121,7 +121,7 @@ int StereoOutput_Packet(StereoObject *pStereoObj)
   iPktLen = sizeof(Metadata) + pMeta->uiRightJpegSize + pMeta->uiLeftJpegSize;
 
   *piLenAddr = sizeof(sockaddr_in);
-
+  
   // RECEIVE STEREO PACKET DATA
   printf(TAG_SOUT "Wait to receive request. iPktLen:%d, addr:%d, len:%d \n", iPktLen, phCliAddr, *piLenAddr);
   iRetVal = SocketUDP_RecvFrom(phSock, cReqBuf, sizeof(REQ_STREAM), phCliAddr, piLenAddr);
@@ -158,7 +158,7 @@ int StereoOutput_Packet1(StereoObject *pStereoObj)
   int iRetVal;
 
   // REQUEST holder
-  char cReqBuf[MAX_REQ_SIZE + 1]; // +1 to add null at last
+  char cReqBuf[MAX_REQ_CMD_SIZE];
 
   // local variable point to the allocated buffers
   StereoPacket   *pPkt;
@@ -184,7 +184,7 @@ int StereoOutput_Packet1(StereoObject *pStereoObj)
 
   // Receive the request
   printf(TAG_SOUT "Waiting for request\n");
-  iRetVal = recvfrom(s, cReqBuf, MAX_REQ_SIZE, 0, &sockClientAddr, &iLenSockClient);
+  iRetVal = recvfrom(s, cReqBuf, MAX_REQ_CMD_SIZE, 0, &sockClientAddr, &iLenSockClient);
   if (iRetVal < 0 ) { goto ret_err; }
 
   if (strcmp(cReqBuf, REQ_STREAM) != 0) {

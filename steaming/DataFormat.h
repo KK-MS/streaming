@@ -35,7 +35,7 @@
 #define REQ_GTMAP_MARKS   (REQ_GTMAP_BASE + 1u)
 #define REQ_GTMAP_CALC    (REQ_GTMAP_BASE + 2u)
 
-#define MAX_REQ_SIZE MAX_FRAME_SIZE
+#define MAX_REQ_CMD_SIZE (64u)
 
 typedef unsigned char uchar;
 

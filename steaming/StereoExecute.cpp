@@ -37,30 +37,29 @@ static HANDLE hStreamingScheduler;
 void StereoExecute_Display(StereoObject *pStereoObject)
 {
 
-		StereoPacket   *pPkt;
-		StereoMetadata *pMeta;
-		unsigned char  *pFrameL;
-		unsigned char  *pFrameR;
-		int iFrameType;
+  StereoPacket   *pPkt;
+  StereoMetadata *pMeta;
+  unsigned char  *pFrameL;
+  unsigned char  *pFrameR;
+  int iFrameType;
 
 #if (FRAME_CHANNELS == 1u)
-		iFrameType = CV_8UC1;
+  iFrameType = CV_8UC1;
 #elif  (FRAME_CHANNELS == 3u)
-		iFrameType = CV_8UC3;
+  iFrameType = CV_8UC3;
 #else
-	Error: in FRAME_CHANNELS
+  Error: in FRAME_CHANNELS;
 #endif 
-		// Get the required data locally
-		pPkt = pStereoObject->pStereoPacket;
-		pMeta = &(pPkt->stMetadata.stStereoMetadata);
-		//pFrameL = pStereoObject->pFrameLeft;
-		pFrameR = pStereoObject->pFrameRight;
+  // Get the required data locally
+  pPkt = pStereoObject->pStereoPacket;
+  pMeta = &(pPkt->stMetadata.stStereoMetadata);
+  //pFrameL = pStereoObject->pFrameLeft;
+  pFrameR = pStereoObject->pFrameRight;
 
-		////////////// RIGHT FRAME ///////////////////////////////
-		// RIGHT: Create a MAT from our buffer
-		Mat mRight(Size(pMeta->uiFrameWidth, pMeta->uiFrameHeight), iFrameType, pFrameR);
-		imshow(DEBUG_STEREO_EXE, mRight);
-
+  ////////////// RIGHT FRAME ///////////////////////////////
+  // RIGHT: Create a MAT from our buffer
+  Mat mRight(Size(pMeta->uiFrameWidth, pMeta->uiFrameHeight), iFrameType, pFrameR);
+  imshow(DEBUG_STEREO_EXE, mRight);
 }
 
 //
@@ -102,7 +101,7 @@ void StereoExecute_Scheduler(void *param)
 
 
 #ifdef DEBUG_STEREO_EXE
-	StereoExecute_Display(pStereoObject);
+    StereoExecute_Display(pStereoObject);
 #endif // DEBUG_STEREO_EXE
 
     //  wait until ESC key
@@ -145,7 +144,6 @@ int StereoExecute_Start(StereoObject *pStereoObject)
   hStreamingScheduler =
     (HANDLE)_beginthread(StereoExecute_Scheduler, 0, (void *)pStereoObject);
 
-
   return 0;
 }
 
@@ -171,7 +169,7 @@ int main()
 
   // Initialize the output interface.
   // Output is a stream of IMU data + Stereo camera frames
-  //StereoOutput_Init(pStereoObject);
+  StereoOutput_Init(pStereoObject);
 
   // Start the stereo module process
   StereoExecute_Start(pStereoObject);

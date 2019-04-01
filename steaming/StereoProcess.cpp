@@ -16,83 +16,21 @@ using namespace cv;
 
 
 // FUNCTIONS
-int StereoProcess_ToJpeg(StereoObject *pStereoObject)
+int StereoProcess_DebugJpegDecode(StereoObject *pStereoObject)
 {
 	StereoPacket   *pPkt;
 	StereoMetadata *pMeta;
-	unsigned char  *pFrameL;
-	unsigned char  *pFrameR;
-	unsigned char  *pJpegWrite; // Write pointer
-	std::vector<uchar> jpeg_buffer;
 	int iFrameType;
-
-#if (FRAME_CHANNELS == 1u)
-	iFrameType = CV_8UC1;
-#elif  (FRAME_CHANNELS == 3u)
-	iFrameType = CV_8UC3;
-#else
-Error: in FRAME_CHANNELS
-#endif 
-
-	static std::vector<int> params = { cv::IMWRITE_JPEG_QUALITY, STEREO_QUALITY_VALUE };
-
-	// Get the required data locally
-	pPkt = pStereoObject->pStereoPacket;
-	pMeta = &(pPkt->stMetadata.stStereoMetadata);
-	pJpegWrite = pPkt->ucJpegFrames;
-
-	pFrameL = pStereoObject->pFrameLeft;
-	pFrameR = pStereoObject->pFrameRight;
-
-	////////////// RIGHT FRAME ///////////////////////////////
-	// RIGHT: Create a MAT from our buffer
-	Mat mRight(Size(pMeta->uiFrameWidth, pMeta->uiFrameHeight), iFrameType, pFrameR);
-
-	// RIGHT: Covert each frame to .jpeg format
-	imencode(".jpeg", mRight, jpeg_buffer, params);
-
-	// RIGHT: Store the info and data in the packet
-	pMeta->uiRightJpegSize = static_cast<unsigned int> (jpeg_buffer.size());
-
-	// RIGHT: Copy the JPEG data
-	memcpy(pJpegWrite,
-		reinterpret_cast<char*>(jpeg_buffer.data()), jpeg_buffer.size());
-
-
-	////////////// LEFT FRAME ///////////////////////////////
-	// Increament the address to store other camera frame !!
-	printf("b4 rs:%d Raw size:%d[0x%x]\n", pMeta->uiRightJpegSize, mRight.total() * mRight.elemSize(), mRight.total() * mRight.elemSize());
-	pMeta->uiRightJpegSize = ALIGN(pMeta->uiRightJpegSize, ALIGN_ADDRESS_BYTE);
-	printf("A4 rs:%d\n", pMeta->uiRightJpegSize);
-	
-	pJpegWrite += pMeta->uiRightJpegSize;
-
-	// LEFT: Create a MAT from our buffer
-	Mat mLeft(Size(pMeta->uiFrameWidth, pMeta->uiFrameHeight), iFrameType, pFrameL);
-
-	// LEFT: Covert each frame to .jpeg format
-	imencode(".jpeg", mLeft, jpeg_buffer, params);
-
-	// LEFT: Store the info and data in the packet
-	pMeta->uiLeftJpegSize = static_cast<unsigned int> (jpeg_buffer.size());
-	
-	// LEFT: Copy the JPEG data
-	memcpy(pJpegWrite,
-		reinterpret_cast<char*>(jpeg_buffer.data()), jpeg_buffer.size());
-	
-
-	printf(TAG_SPRS "JPEG Size R:%d, L:%d, T:%d\n", pMeta->uiRightJpegSize, 
-		pMeta->uiLeftJpegSize, pMeta->uiRightJpegSize + pMeta->uiLeftJpegSize);
-
-
-#ifdef DEBUG_STEREO_JPEG_DB
 
 	//Create a Size(1, nSize) Mat object of 8 - bit, single - byte elements
 	Mat decodedImage;
 	uchar *pJpegRead;
 	unsigned long iJpeg_size;
 
-	
+	// Get the required data locally
+	pPkt = pStereoObject->pStereoPacket;
+	pMeta = &(pPkt->stMetadata.stStereoMetadata);
+
 	//////////// RIGHT ////////////////////////
 	// Get the JPEG base address to read
 	pJpegRead = pPkt->ucJpegFrames;
@@ -163,6 +101,79 @@ Error: in FRAME_CHANNELS
 
 	}
 
+  return 0;
+}
+
+
+int StereoProcess_ToJpeg(StereoObject *pStereoObject)
+{
+	StereoPacket   *pPkt;
+	StereoMetadata *pMeta;
+	unsigned char  *pFrameL;
+	unsigned char  *pFrameR;
+	unsigned char  *pJpegWrite; // Write pointer
+	std::vector<uchar> jpeg_buffer;
+	int iFrameType;
+
+#if (FRAME_CHANNELS == 1u)
+	iFrameType = CV_8UC1;
+#elif  (FRAME_CHANNELS == 3u)
+	iFrameType = CV_8UC3;
+#else
+Error: in FRAME_CHANNELS
+#endif 
+
+	static std::vector<int> params = { cv::IMWRITE_JPEG_QUALITY, STEREO_QUALITY_VALUE };
+
+	// Get the required data locally
+	pPkt = pStereoObject->pStereoPacket;
+	pMeta = &(pPkt->stMetadata.stStereoMetadata);
+	pJpegWrite = pPkt->ucJpegFrames;
+
+	pFrameL = pStereoObject->pFrameLeft;
+	pFrameR = pStereoObject->pFrameRight;
+
+	////////////// RIGHT FRAME ///////////////////////////////
+	// RIGHT: Create a MAT from our buffer
+	Mat mRight(Size(pMeta->uiFrameWidth, pMeta->uiFrameHeight), iFrameType, pFrameR);
+
+	// RIGHT: Covert each frame to .jpeg format
+	imencode(".jpeg", mRight, jpeg_buffer, params);
+
+	// RIGHT: Store the info and data in the packet
+	pMeta->uiRightJpegSize = static_cast<unsigned int> (jpeg_buffer.size());
+
+	// RIGHT: Copy the JPEG data
+	memcpy(pJpegWrite,
+		reinterpret_cast<char*>(jpeg_buffer.data()), jpeg_buffer.size());
+
+
+	////////////// LEFT FRAME ///////////////////////////////
+	// Increament the address to store other camera frame !!
+	printf("b4 rs:%d Raw size:%d[0x%x]\n", pMeta->uiRightJpegSize, mRight.total() * mRight.elemSize(), mRight.total() * mRight.elemSize());
+	pMeta->uiRightJpegSize = ALIGN(pMeta->uiRightJpegSize, ALIGN_ADDRESS_BYTE);
+	printf("A4 rs:%d\n", pMeta->uiRightJpegSize);
+	
+	pJpegWrite += pMeta->uiRightJpegSize;
+
+	// LEFT: Create a MAT from our buffer
+	Mat mLeft(Size(pMeta->uiFrameWidth, pMeta->uiFrameHeight), iFrameType, pFrameL);
+
+	// LEFT: Covert each frame to .jpeg format
+	imencode(".jpeg", mLeft, jpeg_buffer, params);
+
+	// LEFT: Store the info and data in the packet
+	pMeta->uiLeftJpegSize = static_cast<unsigned int> (jpeg_buffer.size());
+	
+	// LEFT: Copy the JPEG data
+	memcpy(pJpegWrite,
+		reinterpret_cast<char*>(jpeg_buffer.data()), jpeg_buffer.size());
+
+	printf(TAG_SPRS "JPEG Size R:%d, L:%d, T:%d\n", pMeta->uiRightJpegSize, 
+		pMeta->uiLeftJpegSize, pMeta->uiRightJpegSize + pMeta->uiLeftJpegSize);
+
+#ifdef DEBUG_STEREO_JPEG_DB
+  StereoProcess_DebugJpegDecode(pStereoObject);
 	// https://stackoverflow.com/questions/14727267/opencv-read-jpeg-image-from-buffer
 #endif //DEBUG_STEREO_JPEG	
 	return 0;
