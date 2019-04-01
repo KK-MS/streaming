@@ -1,8 +1,9 @@
 #pragma once
 
-#define FRAME_WIDTH    (1080u)
+#define FRAME_TYPE     (16) // CV_8UC3
+#define FRAME_WIDTH    (1280u)
 #define FRAME_HEIGHT   (720u)
-#define FRAME_CHANNELS (1u) // 1 => Grayscale
+#define FRAME_CHANNELS (3u) // 1 => Grayscale, 3=> Color RGB/HSI
 #define FRAME_SIZE     (FRAME_WIDTH * FRAME_HEIGHT * FRAME_CHANNELS)
 #define MAX_FRAME_SIZE FRAME_SIZE
 

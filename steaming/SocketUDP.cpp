@@ -152,11 +152,10 @@ int SocketUDP_Deinit(SOCKET *phSock)
 
 SOCKET* SocketUPD_GetSocket(SockObject *pSockObj)
 {
-  WSADATA wsaData;
   int iRetVal;
 
+  WSADATA wsaData;
   SOCKET *phSock;
-  SOCKADDR_IN *phServAddr;
 
   // Initialize Winsock
   iRetVal = WSAStartup(MAKEWORD(2, 2), &wsaData);

@@ -17,8 +17,12 @@ using namespace std;
 using namespace cv;
 
 // Macros
+
 #define TAG_SINP "SInp: "
 //#define WINDOW_STEREO_INPUT_DB "StereoInputDebug"
+
+// Debug enable macros
+//#define DEBUG_STEREO_INIT (1u)
 
 // Global variables
 static VideoCapture   hVLeft; // pointer to the handler of video input
@@ -37,13 +41,20 @@ void debug_mat(Mat &mat_obj, const char *mat_name)
 
 int StereoInput_FromCamera(StereoObject *pStereoObject)
 {
-  Mat cam_frame;
-
   StereoPacket   *pPkt;
   StereoMetadata *pMeta;
   unsigned char  *pFrameL;
   unsigned char  *pFrameR;
   int iDatabytes;
+  int iFrameType;
+
+#if (FRAME_CHANNELS == 1u)
+  iFrameType = CV_8UC1;
+#elif  (FRAME_CHANNELS == 3u)
+  iFrameType = CV_8UC3;
+#else
+Error: in FRAME_CHANNELS
+#endif 
 
   pPkt    = pStereoObject->pStereoPacket;
   pMeta = &(pPkt->stMetadata.stStereoMetadata);
@@ -51,30 +62,42 @@ int StereoInput_FromCamera(StereoObject *pStereoObject)
   // get the frame pointers
   pFrameL = pStereoObject->pFrameLeft;
   pFrameR = pStereoObject->pFrameRight;
-
-  Mat mGrayScaleLeft(Size(pMeta->uiFrameWidth, pMeta->uiFrameHeight), CV_8UC1);
+ 
+  Mat mLeft(Size(pMeta->uiFrameWidth, pMeta->uiFrameHeight), iFrameType, pFrameL);
 
   // Capture video frames
-  hVLeft >> cam_frame;
+  hVLeft >> mLeft;
 
+#if (FRAME_CHANNELS == 1u)
   // Covert to gray scale
-  cv::cvtColor(cam_frame, mGrayScaleLeft, CV_BGR2GRAY);
+  cv::cvtColor(mLeft, mLeft, CV_BGR2GRAY);
+#endif
 
   // Note: Assignment of allocated buffer is not reliable.
   // OpenCV will allocate internal buffer. Not worked here !!, so memcpy
   // Copy the data to our object buffer.
-  iDatabytes = mGrayScaleLeft.total() * mGrayScaleLeft.elemSize(); // pMeta->uiFrameBytes
-  memcpy(pFrameL, mGrayScaleLeft.data, iDatabytes);
+  iDatabytes = mLeft.total() * mLeft.elemSize(); // pMeta->uiFrameBytes
+
+  if (iDatabytes != pMeta->uiFrameBytes) {
+	  printf("Error: iDatabytes:%d, uiFrameBytes:%d\n", iDatabytes, pMeta->uiFrameBytes); getchar(); return -1;
+  }
+
+
+  // Observed that given memory is overridding by MAT with dynamic memory
+  // Thus copy manually.
+  
+  ////////// LEFT /////////////
+  memcpy(pFrameL, mLeft.data, iDatabytes);
 
   ////////// RIGHT /////////////
-  memcpy(pFrameR, mGrayScaleLeft.data, iDatabytes);
+  memcpy(pFrameR, mLeft.data, iDatabytes);
 
 #ifdef WINDOW_STEREO_INPUT_DB
   // Debug: Show gray scale
-  imshow(WINDOW_STEREO_INPUT_DB, mGrayScaleLeft);
+  imshow(WINDOW_STEREO_INPUT_DB, mLeft);
 
   // Debug: Print the gray scale matrix details
-  debug_mat(mGrayScaleLeft, "Gray_input");
+  debug_mat(mLeft, "Input");
 #endif // DEBUG_STEREO_INPUT
 
   return 0;
@@ -108,7 +131,15 @@ int StereoInput_Init(StereoObject *pStereoObject)
 
   unsigned char  *pFrameL;
   unsigned char  *pFrameR;
+  int iFrameType;
 
+#if (FRAME_CHANNELS == 1u)
+  iFrameType = CV_8UC1;
+#elif  (FRAME_CHANNELS == 3u)
+  iFrameType = CV_8UC3;
+#else
+Error: in FRAME_CHANNELS
+#endif  
   printf("In StereoInput_Init\n");
 
   // TODO: Ring buffer
@@ -134,8 +165,31 @@ int StereoInput_Init(StereoObject *pStereoObject)
   if (!hVLeft.isOpened()) {
     printf("Error: Couldn't open video:%d\n", iVideoIDLeft); return -1; }
 
+  hVLeft.set(CV_CAP_PROP_FRAME_WIDTH, FRAME_WIDTH);
+  hVLeft.set(CV_CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT);
+
   // get the initial frame to know the camera frame values
   hVLeft.read(frame);
+
+#if (FRAME_CHANNELS == 1u)
+  // Covert to gray scale
+  cv::cvtColor(frame, frame, CV_BGR2GRAY);
+#endif  
+
+  if (frame.cols != FRAME_WIDTH) {
+	  printf("Error: Frame cols is %d\n", frame.cols); return -1;
+  }
+
+  if (frame.rows != FRAME_HEIGHT) {
+	  printf("Error: Frame rows is %d\n", frame.rows); return -1;
+  }
+  
+  if (frame.channels() != FRAME_CHANNELS) {
+	  printf("Error: Frame channels is %d\n", frame.channels()); return -1; }
+
+  if (frame.type() != iFrameType) {
+	  printf("Error: Frame type is %d\n", frame.type()); return -1;
+  }
 
   // fill the object
   pStereoObject->pStereoPacket = pPkt;
@@ -143,17 +197,19 @@ int StereoInput_Init(StereoObject *pStereoObject)
   pStereoObject->pFrameRight    = pFrameR;
 
   // fill the stereo metadata
-  pMeta->uiFrameWidth  = frame.cols;
-  pMeta->uiFrameHeight = frame.rows;
-  pMeta->uiNumOfChannels = 1;
-  pMeta->uiFrameBytes  = frame.cols * frame.rows * pMeta->uiNumOfChannels;
+  pMeta->uiFrameWidth = FRAME_WIDTH; //frame.cols;
+  pMeta->uiFrameHeight = FRAME_HEIGHT; //frame.rows;
+  pMeta->uiNumOfChannels = FRAME_CHANNELS; //frame.channels(); //FRAME_CHANNELS;
+  pMeta->uiFrameBytes = FRAME_SIZE; //frame.cols * frame.rows * frame.channels();
 
 #ifdef DEBUG_STEREO_INIT
   namedWindow("Stereo_Init", cv::WINDOW_NORMAL);
   while(1) {
 	hVLeft.read(frame);
 	imshow("Stereo_Init", frame);
-    cv::waitKey(10);
+	//  wait until ESC key
+	if (cv::waitKey(10) == 27)
+		break;
   }
 #endif // DEBUG_STEREO_INIT
 #ifdef WINDOW_STEREO_INPUT_DB

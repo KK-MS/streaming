@@ -17,6 +17,7 @@
 #define WINDOW_STEREO_OUTPUT "Stereo Output"
 #define WINDOW_STEREO_JPEG   "Stereo JPEG"
 #define WINDOW_STEREO_DEBUG   "Stereo Debug"
+#define DEBUG_STEREO_EXE "Stereo Execute"
 
 // uncomment the require debug
 #define DEBUG_STEREO_INPUT  (1u)
@@ -32,6 +33,35 @@ using namespace cv;
 
 // Thread, scheduler
 static HANDLE hStreamingScheduler;
+
+void StereoExecute_Display(StereoObject *pStereoObject)
+{
+
+		StereoPacket   *pPkt;
+		StereoMetadata *pMeta;
+		unsigned char  *pFrameL;
+		unsigned char  *pFrameR;
+		int iFrameType;
+
+#if (FRAME_CHANNELS == 1u)
+		iFrameType = CV_8UC1;
+#elif  (FRAME_CHANNELS == 3u)
+		iFrameType = CV_8UC3;
+#else
+	Error: in FRAME_CHANNELS
+#endif 
+		// Get the required data locally
+		pPkt = pStereoObject->pStereoPacket;
+		pMeta = &(pPkt->stMetadata.stStereoMetadata);
+		//pFrameL = pStereoObject->pFrameLeft;
+		pFrameR = pStereoObject->pFrameRight;
+
+		////////////// RIGHT FRAME ///////////////////////////////
+		// RIGHT: Create a MAT from our buffer
+		Mat mRight(Size(pMeta->uiFrameWidth, pMeta->uiFrameHeight), iFrameType, pFrameR);
+		imshow(DEBUG_STEREO_EXE, mRight);
+
+}
 
 //
 // StereoExecute_Scheduler
@@ -69,6 +99,11 @@ void StereoExecute_Scheduler(void *param)
 
     // OUTPUT:e.g. Images
     iRetVal = StereoOutput_Packet(pStereoObject); if (iRetVal) { goto err_ret; }
+
+
+#ifdef DEBUG_STEREO_EXE
+	StereoExecute_Display(pStereoObject);
+#endif // DEBUG_STEREO_EXE
 
     //  wait until ESC key
     if (cv::waitKey(10) == 27)
@@ -136,11 +171,11 @@ int main()
 
   // Initialize the output interface.
   // Output is a stream of IMU data + Stereo camera frames
-  StereoOutput_Init(pStereoObject);
+  //StereoOutput_Init(pStereoObject);
 
   // Start the stereo module process
   StereoExecute_Start(pStereoObject);
-
+  //getchar();
   cv::waitKey(0);
 
   return 0;
