@@ -63,10 +63,10 @@ int SocketUDP_RecvFrom(SOCKET *phSock, char *pDataBuf, int iDataSize,
 
     if (iRxLen > MAX_UDP_DATA_SIZE) { iRxLen = MAX_UDP_DATA_SIZE; }
 
-    printf(TAG_SOCK "B4 RecvFrom: ReqLen:%d len:%d AccLen:%d\n", iDataSize, iRxLen, iAccRxLen);
+    //printf(TAG_SOCK "B4 RecvFrom: ReqLen:%d len:%d AccLen:%d\n", iDataSize, iRxLen, iAccRxLen);
     iRetVal = recvfrom(*phSock, pRecvBuf, iRxLen, 0, pSockCliAddr, pSockSize);
-    SocketUDP_PrintIpPort(phSock, "RecvTo");
-    printf(TAG_SOCK"[%s] IP:Port %s:%d\n", "Remote details:", inet_ntoa(((struct sockaddr_in *)pSockCliAddr)->sin_addr), ntohs(((struct sockaddr_in *)pSockCliAddr)->sin_port));
+    //SocketUDP_PrintIpPort(phSock, "RecvTo");
+    //printf(TAG_SOCK"[%s] IP:Port %s:%d\n", "Remote details:", inet_ntoa(((struct sockaddr_in *)pSockCliAddr)->sin_addr), ntohs(((struct sockaddr_in *)pSockCliAddr)->sin_port));
     if (iRetVal < 0) { return -1; }
 
     pRecvBuf  += iRetVal;
@@ -93,14 +93,15 @@ int SocketUDP_SendTo(SOCKET *phSock, char *pDataBuf, int iDataSize,
   pSendBuf    = pDataBuf;
   iAccTxLen = 0;
 
+  printf(TAG_SOCK "Sending iDataSize:%d\n", iDataSize);
   while(iAccTxLen < iDataSize) {
 
     iTxLen = iDataSize - iAccTxLen;
 
     if (iTxLen > MAX_UDP_DATA_SIZE) { iTxLen = MAX_UDP_DATA_SIZE; }
 
-    printf(TAG_SOCK "B4 sendto: iDataSize:%d len:%d AccLen:%d\n", iDataSize, iTxLen, iAccTxLen);
-    SocketUDP_PrintIpPort(phSock, "SendTo");
+    //printf(TAG_SOCK "B4 sendto: iDataSize:%d len:%d AccLen:%d\n", iDataSize, iTxLen, iAccTxLen);
+    //SocketUDP_PrintIpPort(phSock, "SendTo");
     iRetVal = sendto(*phSock, pSendBuf, iTxLen, 0, pSockDestAddr, iSockSize);
     if (iRetVal < 0) { return -1; }
 
@@ -180,6 +181,9 @@ int SocketUDP_ConnectServer(SockObject *pSockObj)
   SOCKET *phSock;
   SOCKADDR_IN *phServAddr;
 
+  // set timeout, in case of packet drop
+  DWORD timeout = SOCKET_READ_TIMEOUT_SEC * 1000;
+
 #if 0
   WSADATA wsaData;
 
@@ -205,6 +209,9 @@ int SocketUDP_ConnectServer(SockObject *pSockObj)
 
   iRetVal = connect(*phSock, (struct sockaddr *)phServAddr, sizeof(SOCKADDR_IN));
   if (iRetVal < 0) { goto ret_err; }
+
+  // set timeout, in case of packet drop
+  setsockopt(*phSock, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
 
   printf(TAG_SOCK "Connected to Server: %s:%d\n", pSockObj->cIPAddr, pSockObj->iPortNum);
   SocketUDP_PrintIpPort(phSock, "Init");
@@ -314,3 +321,7 @@ ret_err:
 //    sending on a datagram socket using sendto) no address was supplied.
 //    Any other type of operation might also return this error. For example,
 //    setsockopt setting SO_KEEPALIVE if the connection has been reset.
+// WSAETIMEDOUT 10060: Connection timed out.
+//    A connection attempt failed because the connected party did not properly 
+//    respond after a period of time, or the established connection failed 
+//    because the connected host has failed to respond.

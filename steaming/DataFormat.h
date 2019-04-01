@@ -48,10 +48,12 @@ typedef struct ImuMetadata {
 } ImuMetadata;
 
 typedef struct StereoMetadata {
+  unsigned int  uiStereoPktSize; // Metadata + Image stream
+  
   // Image packet. Written by stereo
   unsigned int  uiLeftJpegSize;
   unsigned int  uiRightJpegSize;
-  //unsigned int  uiJpegsSize;
+  
 
   // Image features. Written by stereo
   unsigned int  uiFrameWidth;

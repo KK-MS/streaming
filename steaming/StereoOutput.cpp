@@ -118,8 +118,8 @@ int StereoOutput_Packet(StereoObject *pStereoObj)
   pMeta   = &(pPkt->stMetadata.stStereoMetadata);
 
   //iPktLen = sizeof(StereoPacket);
-  iPktLen = sizeof(Metadata) + pMeta->uiRightJpegSize + pMeta->uiLeftJpegSize;
-
+  //iPktLen = sizeof(Metadata) + pMeta->uiRightJpegSize + pMeta->uiLeftJpegSize;
+  iPktLen = pMeta->uiStereoPktSize;
   *piLenAddr = sizeof(sockaddr_in);
   
   // RECEIVE STEREO PACKET DATA

@@ -3,6 +3,8 @@
 
 #include <windows.h>
 
+#define SOCKET_READ_TIMEOUT_SEC (2u)
+
 // Socket interface object for sending and receiving
 typedef struct SockInterfaceStruct {
   SOCKET      hSock;

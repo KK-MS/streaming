@@ -87,7 +87,7 @@ void StereoExecute_Scheduler(void *param)
     //if (iRetVal) { goto err_ret; }
 
     // DEBUG print. Time stamp
-    ulTimeStamp = pStereoObject->pStereoPacket->stMetadata.stImuMetadata.ulTimestamp++;
+    ulTimeStamp = ++(pStereoObject->pStereoPacket->stMetadata.stImuMetadata.ulTimestamp);
     printf("\n\n ----------------------------------------------- [%d]\n", ulTimeStamp);
 
     // INPUT: CAMERA Images (two camera data)

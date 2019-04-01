@@ -10,7 +10,7 @@ using namespace cv;
 
 // Macros
 #define TAG_SPRS "SPrs: "
-#define DEBUG_STEREO_JPEG_DB (1u)
+//#define DEBUG_STEREO_JPEG_DB (1u)
 #define WINDOW_JPEG_DB_RIGHT "Debug JPEG Decode Right"
 #define WINDOW_JPEG_DB_LEFT "Debug JPEG Decode Left"
 
@@ -171,6 +171,9 @@ Error: in FRAME_CHANNELS
 
 	printf(TAG_SPRS "JPEG Size R:%d, L:%d, T:%d\n", pMeta->uiRightJpegSize, 
 		pMeta->uiLeftJpegSize, pMeta->uiRightJpegSize + pMeta->uiLeftJpegSize);
+	
+	// The size of stereo packet.
+	pMeta->uiStereoPktSize = sizeof(Metadata) + pMeta->uiRightJpegSize + pMeta->uiLeftJpegSize;
 
 #ifdef DEBUG_STEREO_JPEG_DB
   StereoProcess_DebugJpegDecode(pStereoObject);
